@@ -166,7 +166,7 @@ cfg_if::cfg_if! {
 
         #[no_mangle]
         unsafe fn _critical_section_acquire() -> u8 {
-            INIT.call_once(|| unsafe {
+            INIT.call_once(|| {
                 GLOBAL_LOCK.replace(Mutex::new(()));
             });
 
