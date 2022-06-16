@@ -1,10 +1,11 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
-#![cfg_attr(target_arch = "avr", feature(llvm_asm))]
+#![cfg_attr(target_arch = "avr", feature(asm_experimental_arch))]
 #![cfg_attr(target_arch = "avr", feature(extended_key_value_attributes))]
 #![doc = include_str!("../README.md")]
 
 pub use bare_metal::CriticalSection;
+pub use core::arch::asm;
 
 /// Acquire a critical section in the current thread.
 ///
@@ -124,11 +125,10 @@ cfg_if::cfg_if! {
         #[no_mangle]
         unsafe fn _critical_section_acquire() -> u8 {
             let mut sreg: u8;
-            llvm_asm!(
-                "in $0, 0x3F
-                 cli"
-                : "=r"(sreg)
-                ::: "volatile"
+            asm!(
+                "in {0}, 0x3F",
+                "cli",
+                out(reg) sreg
             );
             sreg
         }
@@ -136,7 +136,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         unsafe fn _critical_section_release(token: u8) {
             if token & 0x80 == 0x80 {
-                llvm_asm!("sei" :::: "volatile");
+                asm!("sei");
             }
         }
     } else if #[cfg(target_arch = "riscv32")] {
